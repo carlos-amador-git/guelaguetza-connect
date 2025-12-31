@@ -4,7 +4,10 @@ export enum ViewState {
   AR_SCANNER = 'AR_SCANNER',
   STORIES = 'STORIES',
   CHAT = 'CHAT',
-  PROGRAM = 'PROGRAM'
+  PROGRAM = 'PROGRAM',
+  LOGIN = 'LOGIN',
+  REGISTER = 'REGISTER',
+  PROFILE = 'PROFILE'
 }
 
 export interface BusRoute {

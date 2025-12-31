@@ -5,6 +5,9 @@ import TransportView from './components/TransportView';
 import StoriesView from './components/StoriesView';
 import ChatAssistant from './components/ChatAssistant';
 import ProgramView from './components/ProgramView';
+import LoginView from './components/LoginView';
+import RegisterView from './components/RegisterView';
+import ProfileView from './components/ProfileView';
 import { ViewState } from './types';
 
 // Lazy load ARScanner for code splitting
@@ -31,17 +34,26 @@ const App: React.FC = () => {
         return <ChatAssistant />;
       case ViewState.PROGRAM:
         return <ProgramView />;
+      case ViewState.LOGIN:
+        return <LoginView setView={setCurrentView} />;
+      case ViewState.REGISTER:
+        return <RegisterView setView={setCurrentView} />;
+      case ViewState.PROFILE:
+        return <ProfileView setView={setCurrentView} />;
       default:
         return <HomeView setView={setCurrentView} />;
     }
   };
+
+  // Hide navigation on auth screens
+  const hideNav = [ViewState.LOGIN, ViewState.REGISTER].includes(currentView);
 
   return (
     <div className="max-w-md mx-auto h-screen bg-white relative shadow-2xl overflow-hidden flex flex-col font-sans">
       <div className="flex-1 overflow-y-auto no-scrollbar scroll-smooth">
         {renderView()}
       </div>
-      <Navigation currentView={currentView} setView={setCurrentView} />
+      {!hideNav && <Navigation currentView={currentView} setView={setCurrentView} />}
     </div>
   );
 };
