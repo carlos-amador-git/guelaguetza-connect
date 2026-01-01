@@ -26,7 +26,8 @@
       "mcp__MCP_DOCKER__browser_press_key",
       "mcp__MCP_DOCKER__browser_type",
       "mcp__MCP_DOCKER__browser_fill_form",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "mcp__MCP_DOCKER__browser_wait_for"
     ]
   }
 }

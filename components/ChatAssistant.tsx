@@ -1,23 +1,249 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, User, Bot } from 'lucide-react';
-import { ChatMessage } from '../types';
-import { sendChatMessage } from '../services/api';
-import { sendMessageToGemini } from '../services/geminiService';
+import { Send, Sparkles, User, Bot, Trash2, ChevronLeft, Mic, MicOff } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
-const ChatAssistant: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      role: 'model',
-      text: '¡Hola! Soy GuelaBot 🤖. Pregúntame sobre rutas de transporte, horarios o la historia de las danzas.',
-      timestamp: new Date()
+interface Message {
+  id: string;
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp: Date;
+}
+
+// Knowledge base for GuelaBot
+const GUELAGUETZA_KNOWLEDGE = {
+  general: {
+    keywords: ['qué es', 'guelaguetza', 'que es', 'significa', 'origen', 'historia'],
+    response: `¡La Guelaguetza es la fiesta más grande de Oaxaca! 🎉
+
+Es una celebración ancestral que significa "ofrenda" o "don recíproco" en zapoteco. Se celebra los dos lunes después del 16 de julio (Lunes del Cerro).
+
+Durante la fiesta, delegaciones de las 8 regiones de Oaxaca presentan sus danzas tradicionales y comparten sus productos típicos con el público.`
+  },
+  danzas: {
+    keywords: ['danza', 'baile', 'flor de piña', 'pluma', 'danzas', 'bailes'],
+    response: `Las danzas más emblemáticas de la Guelaguetza son:
+
+🍍 **Flor de Piña** - Mujeres tuxtepecanas con huipiles bordados y piñas en la cabeza
+🦅 **Danza de la Pluma** - Representa la conquista española con impresionantes penachos
+💃 **Jarabe del Valle** - El baile de cortejo oaxaqueño
+🎭 **Danza de los Diablos** - De la Costa, con máscaras y movimientos enérgicos
+
+Cada danza cuenta una historia de la región que representa.`
+  },
+  transporte: {
+    keywords: ['bus', 'transporte', 'ruta', 'llegar', 'auditorio', 'cómo llego', 'binnibus'],
+    response: `Para llegar al Auditorio Guelaguetza tienes estas opciones:
+
+🚌 **BinniBus RC01** - Ruta especial Guelaguetza
+   • Sale de Alameda de León
+   • Cada 5 minutos
+   • Costo: $10 MXN
+
+📍 **Paradas**: Alameda → Chedraui Madero → Museo Infantil → Auditorio
+
+También hay taxis colectivos desde el Zócalo. ¡Usa la sección BinniBus de la app para ver rutas en tiempo real!`
+  },
+  horarios: {
+    keywords: ['horario', 'hora', 'cuando', 'programa', 'fecha', 'calendario', 'cuándo'],
+    response: `📅 **Guelaguetza 2025**
+
+**Fechas**: 21-28 de julio 2025
+
+**Lunes del Cerro** (eventos principales):
+• 21 y 28 de julio
+• 10:00 AM - 4:00 PM
+
+**Eventos destacados**:
+• Desfile de Delegaciones - 17:00
+• Feria del Mezcal - Todo el día
+• Noche de Calenda - 20:00
+
+¡Revisa la sección "Programa" para ver todos los eventos!`
+  },
+  boletos: {
+    keywords: ['boleto', 'ticket', 'entrada', 'comprar', 'precio', 'costo', 'cuánto'],
+    response: `🎫 **Boletos Guelaguetza 2025**
+
+**Precios aproximados**:
+• Palco A (VIP): $1,500 - $2,500 MXN
+• Palco B: $800 - $1,200 MXN
+• Gradería: $300 - $500 MXN
+
+**Dónde comprar**:
+• Ticketmaster.com.mx
+• Taquillas del Auditorio
+• Módulos en el Zócalo
+
+⚠️ ¡Compra con anticipación! Se agotan rápido.`
+  },
+  comida: {
+    keywords: ['comida', 'comer', 'gastronomía', 'mezcal', 'mole', 'tlayuda', 'restaurante'],
+    response: `🍽️ **Gastronomía Oaxaqueña**
+
+No puedes perderte:
+• 🫓 **Tlayudas** - La pizza oaxaqueña
+• 🍲 **7 Moles** - Negro, rojo, amarillo, verde, coloradito, chichilo, manchamanteles
+• 🥃 **Mezcal** - Pruébalo en la Feria del Mezcal
+• 🧀 **Quesillo** - Queso Oaxaca tradicional
+• 🍫 **Chocolate** - De molinillo
+
+**Lugares recomendados**:
+• Mercado 20 de Noviembre
+• Mercado Benito Juárez
+• Restaurantes en el Centro Histórico`
+  },
+  regiones: {
+    keywords: ['región', 'regiones', 'delegación', 'delegaciones', 'pueblos'],
+    response: `🗺️ **Las 8 Regiones de Oaxaca**
+
+Cada una presenta su cultura en la Guelaguetza:
+
+1. **Valles Centrales** - Sede de la ciudad de Oaxaca
+2. **Sierra Norte** - Pueblos mancomunados, mezcal
+3. **Sierra Sur** - Artesanías de palma
+4. **Mixteca** - Cuna de la civilización mixteca
+5. **Costa** - Playas y Danza de los Diablos
+6. **Istmo** - Tehuana, Flor de Piña
+7. **Papaloapan** - Tuxtepec, piña
+8. **Cañada** - Mazateca, hongos sagrados`
+  },
+  clima: {
+    keywords: ['clima', 'tiempo', 'lluvia', 'temperatura', 'qué llevar', 'ropa'],
+    response: `🌤️ **Clima en julio en Oaxaca**
+
+• Temperatura: 18°C - 28°C
+• Es temporada de lluvias ☔
+
+**Recomendaciones**:
+• 🧥 Lleva una chamarra ligera
+• ☂️ Paraguas o impermeable
+• 🧴 Protector solar
+• 👟 Zapatos cómodos
+• 🎒 Mochila pequeña
+
+Las lluvias suelen ser por la tarde, ¡las mañanas son perfectas!`
+  },
+  ubicacion: {
+    keywords: ['dónde', 'ubicación', 'dirección', 'mapa', 'cerro', 'fortín'],
+    response: `📍 **Ubicación del Auditorio Guelaguetza**
+
+El Auditorio está en el **Cerro del Fortín**, con vista panorámica a la ciudad.
+
+**Dirección**:
+Camino al Cerro del Fortín s/n
+Col. Loma del Fortín
+Oaxaca de Juárez
+
+**Cómo llegar**:
+• En BinniBus: Ruta RC01
+• En taxi: Pide "Auditorio Guelaguetza"
+• Caminando: 30 min desde el Zócalo (subida)
+
+¡Usa el mapa en la sección BinniBus!`
+  }
+};
+
+const QUICK_SUGGESTIONS = [
+  '¿Qué es la Guelaguetza?',
+  '¿Cómo llego al Auditorio?',
+  '¿Cuáles son las danzas?',
+  '¿Dónde compro boletos?',
+  '¿Qué puedo comer?',
+  '¿Cuál es el horario?',
+];
+
+// Simple AI response generator
+const generateResponse = (userMessage: string): string => {
+  const message = userMessage.toLowerCase();
+
+  // Check each knowledge category
+  for (const [, data] of Object.entries(GUELAGUETZA_KNOWLEDGE)) {
+    if (data.keywords.some(keyword => message.includes(keyword))) {
+      return data.response;
     }
-  ]);
+  }
+
+  // Check for greetings
+  if (/^(hola|hey|buenos|buenas|qué tal|saludos)/i.test(message)) {
+    return `¡Hola! 👋 Soy GuelaBot, tu guía virtual para la Guelaguetza 2025.
+
+¿En qué puedo ayudarte? Puedo contarte sobre:
+• 🎭 Danzas tradicionales
+• 🚌 Rutas de transporte
+• 🎫 Boletos y precios
+• 🍽️ Gastronomía oaxaqueña
+• 📅 Horarios y programa
+
+¡Pregúntame lo que quieras!`;
+  }
+
+  // Check for thanks
+  if (/gracias|thanks|thx/i.test(message)) {
+    return `¡Con mucho gusto! 😊 Si tienes más preguntas sobre la Guelaguetza, aquí estaré.
+
+¡Que disfrutes la máxima fiesta de Oaxaca! 🎉`;
+  }
+
+  // Default response
+  return `Mmm, no estoy seguro de entender tu pregunta. 🤔
+
+Puedo ayudarte con información sobre:
+• La historia de la Guelaguetza
+• Cómo llegar al Auditorio
+• Danzas y delegaciones
+• Boletos y precios
+• Gastronomía oaxaqueña
+• Horarios del evento
+
+¿Sobre cuál tema te gustaría saber más?`;
+};
+
+interface ChatAssistantProps {
+  onClose?: () => void;
+  embedded?: boolean;
+}
+
+const ChatAssistant: React.FC<ChatAssistantProps> = ({ onClose, embedded = false }) => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string | undefined>();
-  const [useBackend, setUseBackend] = useState(true);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Load chat history from localStorage
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('guelabot_history');
+    if (savedMessages) {
+      const parsed = JSON.parse(savedMessages);
+      setMessages(parsed.map((m: Message) => ({ ...m, timestamp: new Date(m.timestamp) })));
+    } else {
+      // Welcome message
+      setMessages([{
+        id: 'welcome',
+        role: 'assistant',
+        text: `¡Hola${user?.nombre ? ` ${user.nombre}` : ''}! 👋 Soy **GuelaBot**, tu guía virtual para la Guelaguetza 2025.
+
+Puedo ayudarte con:
+• 🎭 Danzas y tradiciones
+• 🚌 Rutas de transporte
+• 🎫 Boletos y precios
+• 🍽️ Gastronomía
+• 📅 Programa de eventos
+
+¿Qué te gustaría saber?`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [user?.nombre]);
+
+  // Save messages to localStorage
+  useEffect(() => {
+    if (messages.length > 1) {
+      localStorage.setItem('guelabot_history', JSON.stringify(messages));
+    }
+  }, [messages]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -27,13 +253,14 @@ const ChatAssistant: React.FC = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSend = async () => {
-    if (!inputValue.trim() || isLoading) return;
+  const handleSend = async (text?: string) => {
+    const messageText = text || inputValue;
+    if (!messageText.trim() || isLoading) return;
 
-    const userMsg: ChatMessage = {
+    const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      text: inputValue,
+      text: messageText,
       timestamp: new Date()
     };
 
@@ -41,108 +268,202 @@ const ChatAssistant: React.FC = () => {
     setInputValue('');
     setIsLoading(true);
 
-    try {
-      let responseText: string;
+    // Simulate typing delay
+    await new Promise(resolve => setTimeout(resolve, 800 + Math.random() * 700));
 
-      if (useBackend) {
-        // Try backend API first
-        try {
-          const result = await sendChatMessage(userMsg.text, conversationId);
-          responseText = result.response;
-          setConversationId(result.conversationId);
-        } catch {
-          // Fallback to direct Gemini if backend fails
-          setUseBackend(false);
-          const history = messages.map(m => ({
-            role: m.role,
-            parts: [{ text: m.text }]
-          }));
-          responseText = await sendMessageToGemini(userMsg.text, history) || '';
-        }
-      } else {
-        // Direct Gemini call
-        const history = messages.map(m => ({
-          role: m.role,
-          parts: [{ text: m.text }]
-        }));
-        responseText = await sendMessageToGemini(userMsg.text, history) || '';
-      }
+    const responseText = generateResponse(messageText);
 
-      const botMsg: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: 'model',
-        text: responseText || "Disculpa, no entendí bien. ¿Puedes repetir?",
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, botMsg]);
-    } catch (e) {
-      console.error(e);
-    } finally {
-      setIsLoading(false);
+    const botMsg: Message = {
+      id: (Date.now() + 1).toString(),
+      role: 'assistant',
+      text: responseText,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, botMsg]);
+    setIsLoading(false);
+  };
+
+  const clearHistory = () => {
+    localStorage.removeItem('guelabot_history');
+    setMessages([{
+      id: 'welcome-new',
+      role: 'assistant',
+      text: `¡Conversación reiniciada! 🔄
+
+¿En qué puedo ayudarte con la Guelaguetza 2025?`,
+      timestamp: new Date()
+    }]);
+  };
+
+  const toggleVoice = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      alert('Tu navegador no soporta reconocimiento de voz');
+      return;
     }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognition = (window as unknown as { SpeechRecognition?: new () => SpeechRecognition; webkitSpeechRecognition?: new () => SpeechRecognition }).SpeechRecognition || (window as unknown as { webkitSpeechRecognition?: new () => SpeechRecognition }).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'es-MX';
+    recognition.continuous = false;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = event.results[0][0].transcript;
+      setInputValue(transcript);
+      inputRef.current?.focus();
+    };
+
+    recognition.start();
+  };
+
+  // Format message text with markdown-like syntax
+  const formatMessage = (text: string) => {
+    return text.split('\n').map((line, i) => {
+      // Bold
+      line = line.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      // Bullet points
+      if (line.startsWith('•')) {
+        return <li key={i} className="ml-4" dangerouslySetInnerHTML={{ __html: line.substring(1) }} />;
+      }
+      return <p key={i} className="mb-1" dangerouslySetInnerHTML={{ __html: line }} />;
+    });
   };
 
   return (
-    <div className="flex flex-col h-full bg-white pb-20">
+    <div className={`flex flex-col bg-gradient-to-b from-oaxaca-purple to-purple-900 ${embedded ? 'h-full' : 'h-full pb-20'}`}>
       {/* Header */}
-      <div className="bg-oaxaca-purple p-4 text-white shadow-md flex items-center gap-3">
-        <div className="bg-white/20 p-2 rounded-full">
-           <Sparkles size={20} className="text-oaxaca-yellow" />
+      <div className="px-4 py-3 text-white flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {onClose && (
+            <button onClick={onClose} className="p-1">
+              <ChevronLeft size={24} />
+            </button>
+          )}
+          <div className="bg-white/20 p-2 rounded-full">
+            <Sparkles size={20} className="text-oaxaca-yellow" />
+          </div>
+          <div>
+            <h2 className="font-bold text-lg">GuelaBot</h2>
+            <p className="text-xs text-white/70">Tu guía de la Guelaguetza</p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-bold">Asistente Cultural</h2>
-          <p className="text-xs text-white/80">Impulsado por Gemini AI</p>
-        </div>
+        <button
+          onClick={clearHistory}
+          className="p-2 hover:bg-white/10 rounded-full transition-colors"
+          title="Borrar conversación"
+        >
+          <Trash2 size={18} />
+        </button>
       </div>
 
+      {/* Quick Suggestions */}
+      {messages.length <= 1 && (
+        <div className="px-4 pb-3">
+          <div className="flex flex-wrap gap-2">
+            {QUICK_SUGGESTIONS.map((suggestion, i) => (
+              <button
+                key={i}
+                onClick={() => handleSend(suggestion)}
+                className="bg-white/10 hover:bg-white/20 text-white text-xs px-3 py-1.5 rounded-full transition-colors"
+              >
+                {suggestion}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-stone-50">
+      <div className="flex-1 overflow-y-auto px-4 py-2 space-y-4">
         {messages.map((msg) => {
           const isUser = msg.role === 'user';
           return (
             <div key={msg.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-              <div className={`flex max-w-[80%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${isUser ? 'bg-gray-200' : 'bg-oaxaca-pink'}`}>
-                  {isUser ? <User size={16} className="text-gray-600" /> : <Bot size={16} className="text-white" />}
+              <div className={`flex max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-end gap-2`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
+                  isUser ? 'bg-oaxaca-yellow' : 'bg-oaxaca-pink'
+                }`}>
+                  {isUser ? (
+                    user?.faceData ? (
+                      <img src={user.faceData} alt="" className="w-8 h-8 rounded-full object-cover" />
+                    ) : (
+                      <User size={16} className="text-purple-900" />
+                    )
+                  ) : (
+                    <Bot size={16} className="text-white" />
+                  )}
                 </div>
                 <div
                   className={`p-3 rounded-2xl text-sm ${
                     isUser
-                      ? 'bg-blue-600 text-white rounded-br-none'
-                      : 'bg-white text-gray-800 border border-gray-200 rounded-bl-none shadow-sm'
+                      ? 'bg-oaxaca-yellow text-purple-900 rounded-br-sm'
+                      : 'bg-white text-gray-800 rounded-bl-sm shadow-lg'
                   }`}
                 >
-                  {msg.text}
+                  <div className="leading-relaxed">
+                    {formatMessage(msg.text)}
+                  </div>
+                  <p className={`text-[10px] mt-1 ${isUser ? 'text-purple-900/50' : 'text-gray-400'}`}>
+                    {msg.timestamp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
+                  </p>
                 </div>
               </div>
             </div>
           );
         })}
+
         {isLoading && (
           <div className="flex justify-start">
-             <div className="bg-white px-4 py-2 rounded-full shadow-sm text-xs text-gray-500 animate-pulse">
-                GuelaBot está escribiendo...
-             </div>
+            <div className="flex items-end gap-2">
+              <div className="w-8 h-8 rounded-full bg-oaxaca-pink flex items-center justify-center">
+                <Bot size={16} className="text-white" />
+              </div>
+              <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
+                <div className="flex gap-1">
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <div className="p-4 bg-white border-t border-gray-100">
-        <div className="flex gap-2">
+      <div className="p-4 bg-white/10 backdrop-blur-sm">
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={toggleVoice}
+            className={`p-3 rounded-full transition-colors ${
+              isListening ? 'bg-red-500 text-white animate-pulse' : 'bg-white/20 text-white hover:bg-white/30'
+            }`}
+          >
+            {isListening ? <MicOff size={20} /> : <Mic size={20} />}
+          </button>
           <input
+            ref={inputRef}
             type="text"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-            placeholder="Pregunta sobre rutas o historia..."
-            className="flex-1 bg-gray-100 border-0 rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-oaxaca-pink outline-none transition"
+            placeholder="Pregunta sobre la Guelaguetza..."
+            className="flex-1 bg-white/20 text-white placeholder-white/50 border-0 rounded-full px-4 py-3 text-sm focus:ring-2 focus:ring-oaxaca-yellow outline-none transition"
           />
           <button
-            onClick={handleSend}
+            onClick={() => handleSend()}
             disabled={isLoading || !inputValue.trim()}
-            className="bg-oaxaca-pink text-white p-3 rounded-full hover:bg-pink-700 disabled:opacity-50 transition shadow-md"
+            className="bg-oaxaca-yellow text-purple-900 p-3 rounded-full hover:bg-yellow-400 disabled:opacity-50 transition shadow-lg"
           >
             <Send size={20} />
           </button>

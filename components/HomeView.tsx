@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MapPin, Calendar, PlayCircle, Camera, X, ChevronRight, Utensils, Wine, Coffee, IceCream } from 'lucide-react';
+import { MapPin, Calendar, PlayCircle, Camera, X, ChevronRight, Utensils, Wine, Coffee, IceCream, MessageCircle, Sparkles } from 'lucide-react';
 import { ViewState } from '../types';
 
 interface HomeViewProps {
@@ -171,6 +171,20 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
           </div>
         </div>
       )}
+
+      {/* Floating GuelaBot Button */}
+      <button
+        onClick={() => setView(ViewState.CHAT)}
+        className="fixed bottom-24 right-4 bg-oaxaca-purple text-white p-4 rounded-full shadow-lg hover:bg-purple-800 transition-all hover:scale-110 active:scale-95 z-40 group"
+      >
+        <div className="relative">
+          <MessageCircle size={24} />
+          <Sparkles size={12} className="absolute -top-1 -right-1 text-oaxaca-yellow" />
+        </div>
+        <span className="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-white text-gray-800 text-xs font-medium px-3 py-1.5 rounded-lg shadow-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+          Pregunta a GuelaBot
+        </span>
+      </button>
     </div>
   );
 };
