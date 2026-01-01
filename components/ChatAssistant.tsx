@@ -406,13 +406,13 @@ Puedo ayudarte con:
                   className={`p-3 rounded-2xl text-sm ${
                     isUser
                       ? 'bg-oaxaca-yellow text-purple-900 rounded-br-sm'
-                      : 'bg-white text-gray-800 rounded-bl-sm shadow-lg'
+                      : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 rounded-bl-sm shadow-lg'
                   }`}
                 >
                   <div className="leading-relaxed">
                     {formatMessage(msg.text)}
                   </div>
-                  <p className={`text-[10px] mt-1 ${isUser ? 'text-purple-900/50' : 'text-gray-400'}`}>
+                  <p className={`text-[10px] mt-1 ${isUser ? 'text-purple-900/50' : 'text-gray-400 dark:text-gray-500'}`}>
                     {msg.timestamp.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}
                   </p>
                 </div>
@@ -427,7 +427,7 @@ Puedo ayudarte con:
               <div className="w-8 h-8 rounded-full bg-oaxaca-pink flex items-center justify-center">
                 <Bot size={16} className="text-white" />
               </div>
-              <div className="bg-white px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
+              <div className="bg-white dark:bg-gray-800 px-4 py-3 rounded-2xl rounded-bl-sm shadow-lg">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />

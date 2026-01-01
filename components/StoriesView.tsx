@@ -1,11 +1,16 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Heart, MessageCircle, Share2, MoreVertical, MapPin, X, Send,
-  Camera, Image, Loader2, Copy, Check, Plus, Trash2
+  Camera, Image, Loader2, Copy, Check, Plus, Trash2, RefreshCw, Video
 } from 'lucide-react';
 import { fetchStories, likeStory, addComment, createStory, Story, Comment } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { STORIES } from '../constants';
+import { cacheStories, getCachedStories } from '../services/offlineCache';
+import { checkOnlineStatus } from '../services/pwa';
+import Skeleton, { SkeletonStoryCard } from './ui/Skeleton';
+import haptics from '../services/haptics';
+import VideoPlayer from './ui/VideoPlayer';
 
 // WhatsApp icon component
 const WhatsAppIcon = () => (
@@ -18,6 +23,9 @@ interface LocalStory {
   id: string;
   description: string;
   mediaUrl: string;
+  mediaType: 'IMAGE' | 'VIDEO';
+  thumbnailUrl?: string | null;
+  duration?: number | null;
   location: string;
   user: { id: string; nombre: string; avatar: string | null };
   likes: number;
@@ -25,10 +33,15 @@ interface LocalStory {
   isLiked: boolean;
 }
 
-const StoriesView: React.FC = () => {
+interface StoriesViewProps {
+  onUserProfile?: (userId: string) => void;
+}
+
+const StoriesView: React.FC<StoriesViewProps> = ({ onUserProfile }) => {
   const { isAuthenticated, token, user } = useAuth();
   const [stories, setStories] = useState<LocalStory[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   // Modals
@@ -60,33 +73,87 @@ const StoriesView: React.FC = () => {
 
   const loadStories = async () => {
     try {
+      // Check if offline, use cache
+      if (!checkOnlineStatus()) {
+        const cached = getCachedStories();
+        if (cached) {
+          setStories(cached.map(s => ({
+            id: s.id,
+            description: s.description,
+            mediaUrl: s.mediaUrl,
+            mediaType: (s as any).mediaType || 'IMAGE',
+            thumbnailUrl: (s as any).thumbnailUrl,
+            duration: (s as any).duration,
+            location: s.location,
+            user: s.user,
+            likes: s._count?.likes || 0,
+            comments: [],
+            isLiked: false,
+          })));
+          setLoading(false);
+          return;
+        }
+      }
+
       const data = await fetchStories();
-      setStories(data.map(s => ({
+      const mappedStories = data.map(s => ({
         id: s.id,
         description: s.description,
         mediaUrl: s.mediaUrl,
+        mediaType: ((s as any).mediaType || 'IMAGE') as 'IMAGE' | 'VIDEO',
+        thumbnailUrl: (s as any).thumbnailUrl,
+        duration: (s as any).duration,
         location: s.location,
         user: s.user,
         likes: s._count.likes,
         comments: [],
         isLiked: false,
-      })));
+      }));
+      setStories(mappedStories);
+
+      // Cache for offline
+      cacheStories(data);
     } catch {
-      // Fallback to static data
-      setStories(STORIES.map(s => ({
-        id: s.id,
-        description: s.description,
-        mediaUrl: s.mediaUrl,
-        location: s.location,
-        user: { id: '1', nombre: s.user, avatar: s.avatar },
-        likes: s.likes,
-        comments: [],
-        isLiked: false,
-      })));
+      // Try cache first
+      const cached = getCachedStories();
+      if (cached) {
+        setStories(cached.map(s => ({
+          id: s.id,
+          description: s.description,
+          mediaUrl: s.mediaUrl,
+          mediaType: ((s as any).mediaType || 'IMAGE') as 'IMAGE' | 'VIDEO',
+          thumbnailUrl: (s as any).thumbnailUrl,
+          duration: (s as any).duration,
+          location: s.location,
+          user: s.user,
+          likes: s._count?.likes || 0,
+          comments: [],
+          isLiked: false,
+        })));
+      } else {
+        // Fallback to static data
+        setStories(STORIES.map(s => ({
+          id: s.id,
+          description: s.description,
+          mediaUrl: s.mediaUrl,
+          mediaType: 'IMAGE' as const,
+          location: s.location,
+          user: { id: '1', nombre: s.user, avatar: s.avatar },
+          likes: s.likes,
+          comments: [],
+          isLiked: false,
+        })));
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    await loadStories();
+    setIsRefreshing(false);
+  }, []);
 
   const currentStory = stories[currentIndex];
 
@@ -106,9 +173,10 @@ const StoriesView: React.FC = () => {
         : s
     ));
 
-    // Show animation
+    // Show animation and haptic feedback
     if (!currentStory.isLiked) {
       setLikeAnimation(currentStory.id);
+      haptics.success(); // Haptic feedback on like
       setTimeout(() => setLikeAnimation(null), 1000);
     }
 
@@ -250,6 +318,7 @@ const StoriesView: React.FC = () => {
       id: Date.now().toString(),
       description: uploadData.description,
       mediaUrl: uploadData.mediaUrl,
+      mediaType: 'IMAGE', // For now, only image uploads supported
       location: uploadData.location || 'Oaxaca',
       user: {
         id: user?.id || 'guest',
@@ -295,8 +364,37 @@ const StoriesView: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="bg-black min-h-screen flex items-center justify-center pb-20">
-        <Loader2 className="animate-spin text-oaxaca-pink" size={40} />
+      <div className="bg-black min-h-screen pb-20">
+        {/* Skeleton Header */}
+        <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-md px-4 py-3 flex justify-between items-center border-b border-white/10">
+          <Skeleton variant="text" width={100} height={24} className="bg-gray-800" />
+          <Skeleton variant="rounded" width={80} height={36} className="bg-gray-800" />
+        </div>
+
+        {/* Skeleton Story */}
+        <div className="relative w-full h-[calc(100vh-130px)] bg-gray-900">
+          {/* User info skeleton */}
+          <div className="absolute top-4 left-4 right-4 z-10 flex items-center gap-3">
+            <Skeleton variant="circular" width={40} height={40} className="bg-gray-700" />
+            <div className="flex-1">
+              <Skeleton variant="text" width={120} height={14} className="bg-gray-700 mb-1" />
+              <Skeleton variant="text" width={80} height={10} className="bg-gray-700" />
+            </div>
+          </div>
+
+          {/* Content shimmer */}
+          <div className="absolute inset-0 bg-gradient-to-b from-gray-800 to-gray-900 animate-pulse" />
+
+          {/* Bottom actions skeleton */}
+          <div className="absolute bottom-8 left-4 right-4 z-10">
+            <Skeleton variant="text" width="80%" height={16} className="bg-gray-700 mb-4" />
+            <div className="flex items-center gap-6">
+              <Skeleton variant="circular" width={28} height={28} className="bg-gray-700" />
+              <Skeleton variant="circular" width={28} height={28} className="bg-gray-700" />
+              <Skeleton variant="circular" width={28} height={28} className="bg-gray-700" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -306,13 +404,23 @@ const StoriesView: React.FC = () => {
       {/* Header */}
       <div className="sticky top-0 z-20 bg-black/80 backdrop-blur-md px-4 py-3 flex justify-between items-center text-white border-b border-white/10">
         <h2 className="font-bold text-xl">Historias</h2>
-        <button
-          onClick={() => setShowUpload(true)}
-          className="flex items-center gap-2 text-sm bg-oaxaca-pink px-4 py-2 rounded-full font-medium"
-        >
-          <Plus size={16} />
-          Subir
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
+            title="Actualizar"
+          >
+            <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+          </button>
+          <button
+            onClick={() => setShowUpload(true)}
+            className="flex items-center gap-2 text-sm bg-oaxaca-pink px-4 py-2 rounded-full font-medium"
+          >
+            <Plus size={16} />
+            Subir
+          </button>
+        </div>
       </div>
 
       {/* Stories Feed */}
@@ -326,11 +434,22 @@ const StoriesView: React.FC = () => {
             className="relative w-full h-[calc(100vh-130px)] shrink-0 snap-start bg-gray-900"
             onDoubleClick={handleDoubleTap}
           >
-            <img
-              src={story.mediaUrl}
-              alt={story.description}
-              className="w-full h-full object-cover"
-            />
+            {story.mediaType === 'VIDEO' ? (
+              <VideoPlayer
+                src={story.mediaUrl}
+                poster={story.thumbnailUrl || undefined}
+                autoPlay={index === currentIndex}
+                muted
+                loop
+                className="w-full h-full"
+              />
+            ) : (
+              <img
+                src={story.mediaUrl}
+                alt={story.description}
+                className="w-full h-full object-cover"
+              />
+            )}
 
             {/* Like Animation */}
             {likeAnimation === story.id && (
@@ -346,7 +465,10 @@ const StoriesView: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/70 flex flex-col justify-between p-4">
               {/* Top: User Info */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <button
+                  onClick={() => onUserProfile?.(story.user.id)}
+                  className="flex items-center gap-3 active:scale-95 transition-transform"
+                >
                   {story.user.avatar ? (
                     <img src={story.user.avatar} alt={story.user.nombre} className="w-10 h-10 rounded-full border-2 border-white object-cover" />
                   ) : (
@@ -354,14 +476,14 @@ const StoriesView: React.FC = () => {
                       <span className="text-white font-bold">{story.user.nombre.charAt(0)}</span>
                     </div>
                   )}
-                  <div>
+                  <div className="text-left">
                     <p className="text-white font-semibold text-sm">{story.user.nombre}</p>
                     <div className="flex items-center gap-1 text-white/70 text-xs">
                       <MapPin size={10} />
                       <span>{story.location}</span>
                     </div>
                   </div>
-                </div>
+                </button>
                 <button
                   onClick={() => setShowOptions(true)}
                   className="p-2 rounded-full bg-black/30"

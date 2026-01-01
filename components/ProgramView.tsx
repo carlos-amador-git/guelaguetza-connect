@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { Calendar, Clock, MapPin, Star, ChevronRight, Ticket, Music, Users, Utensils } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Calendar, Clock, MapPin, Star, ChevronRight, Ticket, Music, Users, Utensils, RefreshCw } from 'lucide-react';
+import PullToRefreshWrapper from './PullToRefreshWrapper';
 
 interface Event {
   id: string;
@@ -113,25 +114,45 @@ const typeConfig = {
 const ProgramView: React.FC = () => {
   const [selectedDay, setSelectedDay] = useState(0);
   const [filter, setFilter] = useState<string | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   const currentSchedule = SCHEDULE[selectedDay];
   const filteredEvents = filter
     ? currentSchedule.events.filter(e => e.type === filter)
     : currentSchedule.events;
 
+  const handleRefresh = useCallback(async () => {
+    setIsRefreshing(true);
+    // Simulate refresh (future: fetch from API)
+    await new Promise(resolve => setTimeout(resolve, 800));
+    setLastUpdate(new Date());
+    setIsRefreshing(false);
+  }, []);
+
   return (
-    <div className="h-full flex flex-col bg-gray-50 pb-20">
+    <div className="h-full flex flex-col bg-gray-50 dark:bg-gray-950 pb-20 transition-colors">
       {/* Header */}
       <div className="bg-oaxaca-purple p-4 pt-6 text-white">
-        <div className="flex items-center gap-2 mb-1">
-          <Calendar size={20} className="text-oaxaca-yellow" />
-          <h2 className="text-xl font-bold">Programa Guelaguetza 2025</h2>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <Calendar size={20} className="text-oaxaca-yellow" />
+            <h2 className="text-xl font-bold">Programa Guelaguetza 2025</h2>
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-2 rounded-full hover:bg-white/10 transition-colors disabled:opacity-50"
+            title="Actualizar"
+          >
+            <RefreshCw size={20} className={isRefreshing ? 'animate-spin' : ''} />
+          </button>
         </div>
         <p className="text-sm text-white/70">Julio 21 - 28, Oaxaca de Juárez</p>
       </div>
 
       {/* Day Selector */}
-      <div className="bg-white shadow-sm sticky top-0 z-10">
+      <div className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-10 transition-colors">
         <div className="flex overflow-x-auto no-scrollbar px-2 py-3 gap-2">
           {SCHEDULE.map((day, index) => (
             <button
@@ -140,7 +161,7 @@ const ProgramView: React.FC = () => {
               className={`flex-shrink-0 px-4 py-2 rounded-xl text-center transition-all ${
                 selectedDay === index
                   ? 'bg-oaxaca-pink text-white shadow-md'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
             >
               <p className="text-xs font-medium">{day.dayName}</p>
@@ -154,7 +175,7 @@ const ProgramView: React.FC = () => {
           <button
             onClick={() => setFilter(null)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition ${
-              !filter ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+              !filter ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
             }`}
           >
             Todos
@@ -164,7 +185,7 @@ const ProgramView: React.FC = () => {
               key={key}
               onClick={() => setFilter(key)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition flex items-center gap-1 ${
-                filter === key ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600'
+                filter === key ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300'
               }`}
             >
               <config.icon size={12} />
@@ -174,64 +195,66 @@ const ProgramView: React.FC = () => {
         </div>
       </div>
 
-      {/* Events List */}
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-        {filteredEvents.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <Calendar size={48} className="mx-auto mb-3 opacity-50" />
-            <p>No hay eventos de este tipo</p>
-          </div>
-        ) : (
-          filteredEvents.map((event) => {
-            const config = typeConfig[event.type];
-            const Icon = config.icon;
-            return (
-              <div
-                key={event.id}
-                className={`bg-white rounded-xl p-4 shadow-sm border-l-4 ${
-                  event.featured ? 'border-oaxaca-pink' : 'border-gray-200'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`${config.color} p-2 rounded-lg text-white`}>
-                    <Icon size={18} />
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <h3 className="font-bold text-gray-900">{event.title}</h3>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Clock size={12} />
-                            {event.time}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <MapPin size={12} />
-                            {event.location}
-                          </span>
+      {/* Events List with Pull-to-Refresh */}
+      <PullToRefreshWrapper onRefresh={handleRefresh} className="flex-1">
+        <div className="px-4 py-4 space-y-3">
+          {filteredEvents.length === 0 ? (
+            <div className="text-center py-12 text-gray-400">
+              <Calendar size={48} className="mx-auto mb-3 opacity-50" />
+              <p>No hay eventos de este tipo</p>
+            </div>
+          ) : (
+            filteredEvents.map((event) => {
+              const config = typeConfig[event.type];
+              const Icon = config.icon;
+              return (
+                <div
+                  key={event.id}
+                  className={`bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border-l-4 transition-colors ${
+                    event.featured ? 'border-oaxaca-pink' : 'border-gray-200 dark:border-gray-700'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`${config.color} p-2 rounded-lg text-white`}>
+                      <Icon size={18} />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-gray-100">{event.title}</h3>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            <span className="flex items-center gap-1">
+                              <Clock size={12} />
+                              {event.time}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin size={12} />
+                              {event.location}
+                            </span>
+                          </div>
                         </div>
+                        {event.featured && (
+                          <Star size={16} className="text-oaxaca-yellow fill-oaxaca-yellow" />
+                        )}
                       </div>
-                      {event.featured && (
-                        <Star size={16} className="text-oaxaca-yellow fill-oaxaca-yellow" />
+                      {event.description && (
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">{event.description}</p>
                       )}
                     </div>
-                    {event.description && (
-                      <p className="text-xs text-gray-600 mt-2">{event.description}</p>
-                    )}
                   </div>
+                  {event.featured && (
+                    <button className="w-full mt-3 py-2 bg-oaxaca-pink/10 dark:bg-oaxaca-pink/20 text-oaxaca-pink rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-oaxaca-pink/20 dark:hover:bg-oaxaca-pink/30 transition">
+                      <Ticket size={16} />
+                      Obtener boletos
+                      <ChevronRight size={16} />
+                    </button>
+                  )}
                 </div>
-                {event.featured && (
-                  <button className="w-full mt-3 py-2 bg-oaxaca-pink/10 text-oaxaca-pink rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-oaxaca-pink/20 transition">
-                    <Ticket size={16} />
-                    Obtener boletos
-                    <ChevronRight size={16} />
-                  </button>
-                )}
-              </div>
-            );
-          })
-        )}
-      </div>
+              );
+            })
+          )}
+        </div>
+      </PullToRefreshWrapper>
     </div>
   );
 };

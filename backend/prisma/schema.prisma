@@ -14,29 +14,51 @@ model User {
   nombre    String
   apellido  String?
   avatar    String?
+  bio       String?
   region    String?
+  isPublic  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  stories       Story[]
-  likes         Like[]
-  comments      Comment[]
-  conversations Conversation[]
+  stories           Story[]
+  likes             Like[]
+  comments          Comment[]
+  conversations     Conversation[]
+  pushSubscriptions PushSubscription[]
+
+  // Social relations
+  followers     Follow[] @relation("UserFollowing")
+  following     Follow[] @relation("UserFollowers")
+
+  // Gamification relations
+  badges        UserBadge[]
+  stats         UserStats?
+
+  // Notification relations
+  notifications Notification[]
 }
 
 model Story {
-  id          String   @id @default(cuid())
-  description String
-  mediaUrl    String
-  location    String
-  views       Int      @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String    @id @default(cuid())
+  description  String
+  mediaUrl     String
+  mediaType    MediaType @default(IMAGE)
+  thumbnailUrl String?
+  duration     Int?
+  location     String
+  views        Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   userId   String
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   likes    Like[]
   comments Comment[]
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
 }
 
 model Like {
@@ -132,4 +154,111 @@ model Message {
 enum Role {
   user
   model
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// SOCIAL: Followers System
+// ============================================
+model Follow {
+  id          String   @id @default(cuid())
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+
+  follower  User @relation("UserFollowers", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("UserFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+}
+
+// ============================================
+// GAMIFICATION: Badges & XP System
+// ============================================
+model Badge {
+  id          String        @id @default(cuid())
+  code        String        @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int           @default(0)
+  category    BadgeCategory
+  threshold   Int           @default(1)
+  createdAt   DateTime      @default(now())
+
+  userBadges UserBadge[]
+}
+
+enum BadgeCategory {
+  STORIES
+  SOCIAL
+  ENGAGEMENT
+  STREAK
+  SPECIAL
+}
+
+model UserBadge {
+  id         String   @id @default(cuid())
+  userId     String
+  badgeId    String
+  unlockedAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge Badge @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])
+}
+
+model UserStats {
+  id            String    @id @default(cuid())
+  userId        String    @unique
+  xp            Int       @default(0)
+  level         Int       @default(1)
+  currentStreak Int       @default(0)
+  longestStreak Int       @default(0)
+  lastVisitDate DateTime?
+  updatedAt     DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// ============================================
+// NOTIFICATIONS: Real-time System
+// ============================================
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      Json?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  NEW_FOLLOWER
+  LIKE
+  COMMENT
+  BADGE_UNLOCKED
+  LEVEL_UP
+  SYSTEM
 }

@@ -7,6 +7,10 @@ import authRoutes from './routes/auth.js';
 import storiesRoutes from './routes/stories.js';
 import transportRoutes from './routes/transport.js';
 import chatRoutes from './routes/chat.js';
+import pushRoutes from './routes/push.js';
+import socialRoutes from './routes/social.js';
+import gamificationRoutes from './routes/gamification.js';
+import notificationsRoutes from './routes/notifications.js';
 import { ZodError } from 'zod';
 
 export async function buildApp(): Promise<FastifyInstance> {
@@ -40,6 +44,10 @@ export async function buildApp(): Promise<FastifyInstance> {
   await app.register(storiesRoutes, { prefix: '/api/stories' });
   await app.register(transportRoutes, { prefix: '/api/transport' });
   await app.register(chatRoutes, { prefix: '/api/chat' });
+  await app.register(pushRoutes, { prefix: '/api/push' });
+  await app.register(socialRoutes, { prefix: '/api' });
+  await app.register(gamificationRoutes, { prefix: '/api/gamification' });
+  await app.register(notificationsRoutes, { prefix: '/api/notifications' });
 
   // Health check
   app.get('/health', async () => {
@@ -56,6 +64,10 @@ export async function buildApp(): Promise<FastifyInstance> {
         stories: '/api/stories',
         transport: '/api/transport',
         chat: '/api/chat',
+        push: '/api/push',
+        social: '/api/users, /api/feed',
+        gamification: '/api/gamification',
+        notifications: '/api/notifications',
       },
     };
   });

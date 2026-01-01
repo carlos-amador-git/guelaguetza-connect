@@ -7,7 +7,10 @@ export enum ViewState {
   PROGRAM = 'PROGRAM',
   LOGIN = 'LOGIN',
   REGISTER = 'REGISTER',
-  PROFILE = 'PROFILE'
+  PROFILE = 'PROFILE',
+  USER_PROFILE = 'USER_PROFILE',
+  BADGES = 'BADGES',
+  LEADERBOARD = 'LEADERBOARD'
 }
 
 export interface BusRoute {

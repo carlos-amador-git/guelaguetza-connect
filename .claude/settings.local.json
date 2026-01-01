@@ -27,7 +27,10 @@
       "mcp__MCP_DOCKER__browser_type",
       "mcp__MCP_DOCKER__browser_fill_form",
       "Bash(npm install:*)",
-      "mcp__MCP_DOCKER__browser_wait_for"
+      "mcp__MCP_DOCKER__browser_wait_for",
+      "Bash(wc:*)",
+      "Bash(node scripts/generate-icons.mjs:*)",
+      "Bash(npx web-push:*)"
     ]
   }
 }
