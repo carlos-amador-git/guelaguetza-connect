@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+type UserRole = 'USER' | 'MODERATOR' | 'ADMIN';
+
 interface User {
   id: string;
   email: string;
@@ -8,6 +10,7 @@ interface User {
   avatar?: string;
   region?: string;
   faceData?: string; // Base64 encoded face image for Face ID
+  role?: UserRole;
 }
 
 interface AuthContextType {

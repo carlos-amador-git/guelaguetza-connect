@@ -7,18 +7,30 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// USER ROLES: Admin & Moderation System
+// ============================================
+enum UserRole {
+  USER
+  MODERATOR
+  ADMIN
+}
+
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  nombre    String
-  apellido  String?
-  avatar    String?
-  bio       String?
-  region    String?
-  isPublic  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String    @id @default(cuid())
+  email        String    @unique
+  password     String
+  nombre       String
+  apellido     String?
+  avatar       String?
+  bio          String?
+  region       String?
+  isPublic     Boolean   @default(true)
+  role         UserRole  @default(USER)
+  bannedAt     DateTime?
+  bannedReason String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   stories           Story[]
   likes             Like[]
@@ -45,6 +57,14 @@ model User {
   // Event relations
   eventRSVPs     EventRSVP[]
   eventReminders EventReminder[]
+
+  // Analytics relations
+  activityLogs ActivityLog[]
+
+  // Community relations
+  createdCommunities Community[]       @relation("CommunityCreator")
+  communityMembers   CommunityMember[]
+  communityPosts     CommunityPost[]
 }
 
 model Story {
@@ -367,4 +387,81 @@ model EventReminder {
   event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+}
+
+// ============================================
+// ANALYTICS: Activity Logging
+// ============================================
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  action     String   // CREATE_STORY, LIKE, COMMENT, FOLLOW, VIEW_STORY, etc.
+  targetType String?  // STORY, USER, COMMENT, COMMUNITY, EVENT
+  targetId   String?
+  metadata   Json?    // Additional context data
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([action, createdAt])
+  @@index([targetType, targetId])
+}
+
+// ============================================
+// COMMUNITIES: Groups & Discussions
+// ============================================
+model Community {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  imageUrl    String?
+  coverUrl    String?
+  isPublic    Boolean  @default(true)
+  createdById String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  createdBy User              @relation("CommunityCreator", fields: [createdById], references: [id])
+  members   CommunityMember[]
+  posts     CommunityPost[]
+
+  @@index([slug])
+  @@index([createdById])
+}
+
+enum CommunityRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+model CommunityMember {
+  id          String        @id @default(cuid())
+  userId      String
+  communityId String
+  role        CommunityRole @default(MEMBER)
+  joinedAt    DateTime      @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId])
+  @@index([communityId])
+}
+
+model CommunityPost {
+  id          String   @id @default(cuid())
+  communityId String
+  authorId    String
+  content     String
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([communityId, createdAt])
 }

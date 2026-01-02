@@ -29,6 +29,7 @@ export class AuthService {
         apellido: true,
         avatar: true,
         region: true,
+        role: true,
         createdAt: true,
       },
     });
@@ -58,6 +59,7 @@ export class AuthService {
       apellido: user.apellido,
       avatar: user.avatar,
       region: user.region,
+      role: user.role,
     };
   }
 
@@ -71,6 +73,7 @@ export class AuthService {
         apellido: true,
         avatar: true,
         region: true,
+        role: true,
         createdAt: true,
         _count: {
           select: {
@@ -99,6 +102,7 @@ export class AuthService {
         apellido: true,
         avatar: true,
         region: true,
+        role: true,
       },
     });
 

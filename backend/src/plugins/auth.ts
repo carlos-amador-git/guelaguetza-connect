@@ -1,6 +1,15 @@
 import { FastifyPluginAsync, FastifyRequest, FastifyReply } from 'fastify';
 import fp from 'fastify-plugin';
 import fastifyJwt from '@fastify/jwt';
+import { UserRole } from '@prisma/client';
+
+export interface AuthUser {
+  id: string;
+  userId: string; // Alias for backward compatibility
+  email: string;
+  role: UserRole;
+  bannedAt: Date | null;
+}
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -11,7 +20,7 @@ declare module 'fastify' {
 declare module '@fastify/jwt' {
   interface FastifyJWT {
     payload: { userId: string };
-    user: { userId: string };
+    user: AuthUser;
   }
 }
 
@@ -22,8 +31,29 @@ const authPlugin: FastifyPluginAsync = async (fastify) => {
 
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      await request.jwtVerify();
-    } catch (err) {
+      // First verify the JWT token
+      const decoded = await request.jwtVerify<{ userId: string }>();
+
+      // Fetch full user data including role
+      const user = await fastify.prisma.user.findUnique({
+        where: { id: decoded.userId },
+        select: { id: true, email: true, role: true, bannedAt: true },
+      });
+
+      if (!user) {
+        return reply.status(401).send({ error: 'Usuario no encontrado' });
+      }
+
+      if (user.bannedAt) {
+        return reply.status(403).send({ error: 'Tu cuenta ha sido suspendida' });
+      }
+
+      // Set request.user with full user data (include userId alias for backward compatibility)
+      (request as unknown as { user: AuthUser }).user = {
+        ...user,
+        userId: user.id,
+      };
+    } catch {
       reply.status(401).send({ error: 'No autorizado' });
     }
   });

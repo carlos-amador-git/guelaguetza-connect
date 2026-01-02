@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Mail, MapPin, LogOut, Camera, Scan, ChevronRight, Settings, Bell, Shield, Heart, HelpCircle, Trophy, Award, Loader2 } from 'lucide-react';
+import { User, Mail, MapPin, LogOut, Camera, Scan, ChevronRight, Settings, Bell, Shield, Heart, HelpCircle, Trophy, Award, Loader2, MessageSquare, BarChart3, Users, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { ViewState } from '../types';
 import { getMyStats, checkIn, UserStats } from '../services/gamification';
@@ -222,9 +222,47 @@ const ProfileView: React.FC<ProfileViewProps> = ({ setView }) => {
           </button>
         </div>
 
+        {/* Social Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+          <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Social</p>
+
+          <button
+            onClick={() => setView(ViewState.DIRECT_MESSAGES)}
+            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <MessageSquare size={18} className="text-blue-600 dark:text-blue-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-900 dark:text-gray-100">Mensajes Directos</span>
+            <ChevronRight size={18} className="text-gray-400" />
+          </button>
+
+          <button
+            onClick={() => setView(ViewState.COMMUNITIES)}
+            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+              <Users size={18} className="text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-900 dark:text-gray-100">Comunidades</span>
+            <ChevronRight size={18} className="text-gray-400" />
+          </button>
+        </div>
+
         {/* Activity Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
           <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Actividad</p>
+
+          <button
+            onClick={() => setView(ViewState.ANALYTICS)}
+            className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-full">
+              <BarChart3 size={18} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <span className="flex-1 text-left text-gray-900 dark:text-gray-100">Mis Estadísticas</span>
+            <ChevronRight size={18} className="text-gray-400" />
+          </button>
 
           <button className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition">
             <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-full">
@@ -245,6 +283,24 @@ const ProfileView: React.FC<ProfileViewProps> = ({ setView }) => {
             <ChevronRight size={18} className="text-gray-400" />
           </button>
         </div>
+
+        {/* Admin Section - Only for admins */}
+        {user.role === 'ADMIN' && (
+          <div className="bg-white dark:bg-gray-800 rounded-xl overflow-hidden">
+            <p className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">Administración</p>
+
+            <button
+              onClick={() => setView(ViewState.ADMIN)}
+              className="w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+            >
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <ShieldCheck size={18} className="text-red-600 dark:text-red-400" />
+              </div>
+              <span className="flex-1 text-left text-gray-900 dark:text-gray-100">Panel de Admin</span>
+              <ChevronRight size={18} className="text-gray-400" />
+            </button>
+          </div>
+        )}
 
         {/* Logout */}
         <button

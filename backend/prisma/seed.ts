@@ -1,11 +1,20 @@
-import { PrismaClient, RouteType } from '@prisma/client';
+import { PrismaClient, RouteType, UserRole } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
   console.log('Seeding database...');
 
+  // Hash password
+  const hashedPassword = await bcrypt.hash('password123', 10);
+  const adminPassword = await bcrypt.hash('admin123', 10);
+
   // Clear existing data
+  await prisma.activityLog.deleteMany();
+  await prisma.communityPost.deleteMany();
+  await prisma.communityMember.deleteMany();
+  await prisma.community.deleteMany();
   await prisma.message.deleteMany();
   await prisma.conversation.deleteMany();
   await prisma.comment.deleteMany();
@@ -16,14 +25,29 @@ async function main() {
   await prisma.busRoute.deleteMany();
   await prisma.user.deleteMany();
 
+  // Create admin user
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@guelaguetza.mx',
+      password: adminPassword,
+      nombre: 'Admin',
+      apellido: 'Guelaguetza',
+      region: 'Valles Centrales',
+      role: UserRole.ADMIN,
+    },
+  });
+
+  console.log('Created admin user:', adminUser.email);
+
   // Create demo user
   const demoUser = await prisma.user.create({
     data: {
       email: 'demo@guelaguetza.mx',
-      password: '$2a$10$rQnRHs5Zvz5Zvz5Zvz5ZvuqWGcXOqWGcXOqWGcXOqWGcXOqWGcXO', // "password123"
+      password: hashedPassword,
       nombre: 'Usuario Demo',
       apellido: 'Oaxaca',
       region: 'Valles Centrales',
+      role: UserRole.USER,
     },
   });
 
@@ -144,6 +168,61 @@ async function main() {
   ]);
 
   console.log('Created', stories.length, 'demo stories');
+
+  // Create sample communities
+  const communities = await Promise.all([
+    prisma.community.create({
+      data: {
+        name: 'Amantes del Mezcal',
+        slug: 'amantes-del-mezcal',
+        description: 'Comunidad para quienes aprecian el mezcal artesanal oaxaqueño. Compartimos recomendaciones, historias y experiencias.',
+        imageUrl: 'https://picsum.photos/200/200?random=201',
+        coverUrl: 'https://picsum.photos/800/300?random=201',
+        isPublic: true,
+        createdById: adminUser.id,
+        members: {
+          create: [
+            { userId: adminUser.id, role: 'ADMIN' },
+            { userId: demoUser.id, role: 'MEMBER' },
+          ],
+        },
+      },
+    }),
+    prisma.community.create({
+      data: {
+        name: 'Danzas Tradicionales',
+        slug: 'danzas-tradicionales',
+        description: 'Espacio para compartir la pasión por las danzas tradicionales de las 8 regiones de Oaxaca.',
+        imageUrl: 'https://picsum.photos/200/200?random=202',
+        coverUrl: 'https://picsum.photos/800/300?random=202',
+        isPublic: true,
+        createdById: demoUser.id,
+        members: {
+          create: [
+            { userId: demoUser.id, role: 'ADMIN' },
+          ],
+        },
+      },
+    }),
+    prisma.community.create({
+      data: {
+        name: 'Fotografía Guelaguetza',
+        slug: 'fotografia-guelaguetza',
+        description: 'Fotógrafos profesionales y aficionados compartiendo las mejores tomas del festival.',
+        imageUrl: 'https://picsum.photos/200/200?random=203',
+        coverUrl: 'https://picsum.photos/800/300?random=203',
+        isPublic: true,
+        createdById: adminUser.id,
+        members: {
+          create: [
+            { userId: adminUser.id, role: 'ADMIN' },
+          ],
+        },
+      },
+    }),
+  ]);
+
+  console.log('Created', communities.length, 'demo communities');
 
   // Create demo conversation
   const conversation = await prisma.conversation.create({

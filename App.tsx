@@ -16,6 +16,10 @@ import DirectChatView from './components/DirectChatView';
 import SearchView from './components/SearchView';
 import EventsView from './components/EventsView';
 import EventDetailView from './components/EventDetailView';
+import AnalyticsDashboard from './components/AnalyticsDashboard';
+import AdminDashboard from './components/admin/AdminDashboard';
+import CommunitiesView from './components/CommunitiesView';
+import CommunityDetailView from './components/CommunityDetailView';
 import OfflineIndicator from './components/OfflineIndicator';
 import UpdatePrompt from './components/UpdatePrompt';
 import NotificationPrompt from './components/NotificationPrompt';
@@ -39,6 +43,9 @@ const App: React.FC = () => {
   // Events state
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
 
+  // Communities state
+  const [selectedCommunityId, setSelectedCommunityId] = useState<string | null>(null);
+
   const handleViewUserProfile = (userId: string) => {
     setSelectedUserId(userId);
     setPreviousView(currentView);
@@ -54,6 +61,11 @@ const App: React.FC = () => {
   const handleEventDetail = (eventId: string) => {
     setSelectedEventId(eventId);
     setCurrentView(ViewState.EVENT_DETAIL);
+  };
+
+  const handleCommunityDetail = (communityId: string) => {
+    setSelectedCommunityId(communityId);
+    setCurrentView(ViewState.COMMUNITY_DETAIL);
   };
 
   // Check if onboarding has been completed
@@ -154,6 +166,36 @@ const App: React.FC = () => {
             onEventDetail={handleEventDetail}
           />
         );
+      case ViewState.ANALYTICS:
+        return (
+          <AnalyticsDashboard
+            onBack={() => setCurrentView(ViewState.PROFILE)}
+          />
+        );
+      case ViewState.ADMIN:
+        return (
+          <AdminDashboard
+            onBack={() => setCurrentView(ViewState.PROFILE)}
+          />
+        );
+      case ViewState.COMMUNITIES:
+        return (
+          <CommunitiesView
+            onCommunityClick={handleCommunityDetail}
+          />
+        );
+      case ViewState.COMMUNITY_DETAIL:
+        return selectedCommunityId ? (
+          <CommunityDetailView
+            communityId={selectedCommunityId}
+            onBack={() => setCurrentView(ViewState.COMMUNITIES)}
+            onUserProfile={handleViewUserProfile}
+          />
+        ) : (
+          <CommunitiesView
+            onCommunityClick={handleCommunityDetail}
+          />
+        );
       default:
         return <HomeView setView={setCurrentView} />;
     }
@@ -171,6 +213,10 @@ const App: React.FC = () => {
     ViewState.SEARCH,
     ViewState.EVENTS,
     ViewState.EVENT_DETAIL,
+    ViewState.ANALYTICS,
+    ViewState.ADMIN,
+    ViewState.COMMUNITIES,
+    ViewState.COMMUNITY_DETAIL,
   ].includes(currentView);
 
   return (
