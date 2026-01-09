@@ -69,12 +69,12 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
           {/* Logo/Brand */}
           <div className="p-6 border-b border-gray-100 dark:border-gray-800">
             <h1 className="text-xl font-bold text-oaxaca-pink">Guelaguetza</h1>
-            <p className="text-xs text-gray-500 dark:text-gray-400">Connect 2025</p>
+            <p className="text-xs text-gray-500 dark:text-gray-500">Connect 2025</p>
           </div>
 
           {/* Main Navigation */}
           <nav className="flex-1 p-4 space-y-1 overflow-y-auto" role="navigation" aria-label="Navegación principal">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3" aria-hidden="true">Principal</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3" aria-hidden="true">Principal</p>
             {mainNavItems.map((item) => {
               const isActive = currentView === item.view;
               const isProfile = item.view === ViewState.PROFILE;
@@ -88,7 +88,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
                   className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all ${
                     isActive
                       ? 'bg-oaxaca-pink/10 text-oaxaca-pink font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-600 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   {isProfile && isAuthenticated && user?.faceData ? (
@@ -107,7 +107,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
 
             <div className="my-4 border-t border-gray-100 dark:border-gray-800" aria-hidden="true" />
 
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3" aria-hidden="true">Explorar</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3" aria-hidden="true">Explorar</p>
             {extraNavItems.map((item) => {
               const isActive = currentView === item.view;
 
@@ -120,7 +120,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
                   className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl transition-all ${
                     isActive
                       ? 'bg-oaxaca-pink/10 text-oaxaca-pink font-medium'
-                      : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-600 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                   }`}
                 >
                   <item.icon size={20} strokeWidth={isActive ? 2.5 : 2} aria-hidden="true" />
@@ -219,7 +219,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
                     className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all ${
                       isActive
                         ? 'bg-oaxaca-pink/10 text-oaxaca-pink'
-                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+                        : 'text-gray-600 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
                     <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-2 ${
@@ -255,7 +255,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
                 aria-label={item.label}
                 aria-current={isActive ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
-                  isActive ? 'text-oaxaca-pink' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+                  isActive ? 'text-oaxaca-pink' : 'text-gray-500 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
                 }`}
               >
                 {isProfile && isAuthenticated && user?.faceData ? (
@@ -288,7 +288,7 @@ const Navigation: React.FC<NavigationProps> = ({ currentView, setView, onUserPro
             aria-expanded={showMoreMenu}
             aria-haspopup="dialog"
             className={`flex flex-col items-center justify-center w-full h-full transition-colors duration-200 ${
-              isMoreActive ? 'text-oaxaca-pink' : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+              isMoreActive ? 'text-oaxaca-pink' : 'text-gray-500 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
             }`}
           >
             <MoreHorizontal size={24} strokeWidth={isMoreActive ? 2.5 : 2} aria-hidden="true" />

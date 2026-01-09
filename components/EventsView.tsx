@@ -104,7 +104,7 @@ const EventsView: React.FC<EventsViewProps> = ({
             </button>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">Eventos</h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Guelaguetza 2025</p>
+              <p className="text-xs text-gray-500 dark:text-gray-500">Guelaguetza 2025</p>
             </div>
           </div>
           <button
@@ -207,7 +207,7 @@ const EventsView: React.FC<EventsViewProps> = ({
                     <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 capitalize flex items-center gap-2">
                       <span className="w-2 h-2 bg-oaxaca-pink rounded-full"></span>
                       {date}
-                      <span className="text-xs font-normal text-gray-400">({dateEvents.length} eventos)</span>
+                      <span className="text-xs font-normal text-gray-500">({dateEvents.length} eventos)</span>
                     </h3>
                   </div>
                   <div className="space-y-3 pt-2">

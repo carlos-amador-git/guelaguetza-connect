@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { MapPin, Calendar, PlayCircle, Camera, X, ChevronRight, Utensils, Wine, Coffee, IceCream, MessageCircle, Sparkles, ShoppingBag, Radio, Ticket, Map, Search, Users, CalendarDays, User, Heart, ChevronLeft } from 'lucide-react';
 import { ViewState } from '../types';
 import { getWishlistCount } from '../services/marketplace';
+import { useLanguage, LanguageSelector } from '../contexts/LanguageContext';
 
 const HERO_IMAGES = [
   '/images/guelaguetza-dancers.png',
@@ -59,6 +60,7 @@ const DISCOVER_SLIDES = [
 ];
 
 const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
+  const { t, greeting } = useLanguage();
   const [showGastroModal, setShowGastroModal] = useState(false);
   const [heroIndex, setHeroIndex] = useState(0);
   const [discoverIndex, setDiscoverIndex] = useState(0);
@@ -136,12 +138,16 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
 
         {/* Top Navigation Bar */}
         <div className="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-3 md:px-6">
-          <div className="text-white font-bold text-lg drop-shadow-lg">GC</div>
+          <div className="flex items-center gap-3">
+            <div className="text-white font-bold text-lg drop-shadow-lg">GC</div>
+            {/* Language Selector */}
+            <LanguageSelector compact />
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setView(ViewState.SEARCH)}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 transition text-white backdrop-blur-sm"
-              aria-label="Buscar"
+              aria-label={t('search')}
             >
               <Search size={20} />
             </button>
@@ -160,7 +166,7 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
             <button
               onClick={() => setView(ViewState.EVENTS)}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 transition text-white backdrop-blur-sm relative"
-              aria-label="Eventos"
+              aria-label={t('events')}
             >
               <CalendarDays size={20} />
               <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-oaxaca-yellow rounded-full border border-white"></span>
@@ -168,7 +174,7 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
             <button
               onClick={() => setView(ViewState.PROFILE)}
               className="p-2 rounded-full bg-black/20 hover:bg-black/40 transition text-white backdrop-blur-sm"
-              aria-label="Perfil"
+              aria-label={t('profile')}
             >
               <User size={20} />
             </button>
@@ -178,8 +184,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
         {/* Hero Content */}
         <div className="absolute bottom-6 left-6 right-6 md:bottom-10 md:left-10 text-white">
           <p className="text-sm md:text-base font-semibold uppercase tracking-wider mb-1 text-oaxaca-yellow drop-shadow-lg">Julio 21-28, 2025</p>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight drop-shadow-lg">Guelaguetza Connect</h1>
-          <p className="text-white/90 text-sm md:text-base lg:text-lg mt-2 max-w-xl drop-shadow">La maxima fiesta de los Oaxaquenos en tu bolsillo.</p>
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold leading-tight drop-shadow-lg">{greeting}! Guelaguetza</h1>
+          <p className="text-white/90 text-sm md:text-base lg:text-lg mt-2 max-w-xl drop-shadow">{t('welcome_message')} en tu bolsillo.</p>
         </div>
       </div>
 

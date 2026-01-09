@@ -100,7 +100,7 @@ const EventCard: React.FC<EventCardProps> = ({
         {/* Info */}
         <div className="flex-1 min-w-0 py-1">
           <h3 className="font-semibold text-gray-900 dark:text-white line-clamp-1">{event.title}</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-500 flex items-center gap-1 mt-1">
             <Clock size={12} className="flex-shrink-0" />
             {formatEventTime(event.startDate)}
             <span className="mx-1">•</span>
@@ -108,7 +108,7 @@ const EventCard: React.FC<EventCardProps> = ({
             <span className="truncate">{event.location}</span>
           </p>
           <div className="flex items-center justify-between mt-2">
-            <div className="flex items-center gap-1 text-xs text-gray-400">
+            <div className="flex items-center gap-1 text-xs text-gray-500">
               <Users size={12} />
               <span>{event.rsvpCount} asistirán</span>
             </div>
@@ -174,7 +174,7 @@ const EventCard: React.FC<EventCardProps> = ({
           {event.title}
         </h3>
 
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 line-clamp-2">
+        <p className="text-sm text-gray-500 dark:text-gray-500 mt-2 line-clamp-2">
           {event.description}
         </p>
 
@@ -183,7 +183,7 @@ const EventCard: React.FC<EventCardProps> = ({
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
             <Calendar size={16} className="text-oaxaca-pink flex-shrink-0" />
             <span>{formatEventDate(event.startDate)}</span>
-            <span className="text-gray-400">|</span>
+            <span className="text-gray-500">|</span>
             <Clock size={16} className="text-oaxaca-pink flex-shrink-0" />
             <span>{formatEventTime(event.startDate)}</span>
           </div>
@@ -231,7 +231,7 @@ const EventCard: React.FC<EventCardProps> = ({
             </span>
           ) : event.isOfficial ? (
             ticketStatus === 'SOLD_OUT' ? (
-              <span className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 text-xs font-medium rounded-full cursor-not-allowed">
+              <span className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-500 text-xs font-medium rounded-full cursor-not-allowed">
                 Agotado
               </span>
             ) : (

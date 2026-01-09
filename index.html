@@ -36,6 +36,12 @@
                 stone: '#F5F5F4',    // Piedra Cantera - Background
                 dark: '#1C1917',     // Texto Oscuro
                 earth: '#8B4513',    // Tierra Oaxaqueña
+              },
+              // Accessible gray colors (WCAG AA compliant - 4.5:1 contrast ratio)
+              'a11y': {
+                'gray': '#595959',       // Accessible gray on white (7:1)
+                'gray-light': '#6B6B6B', // Accessible light gray (5.5:1)
+                'muted': '#767676',      // Minimum WCAG AA (4.5:1)
               }
             },
             // Design Tokens - Tipografía
@@ -132,6 +138,33 @@
         -webkit-line-clamp: 2;
         -webkit-box-orient: vertical;
         overflow: hidden;
+      }
+
+      /* Accessibility - Improved contrast for outdoor/sunlight viewing */
+      @media (prefers-contrast: more) {
+        .text-gray-400, .text-gray-300 {
+          color: #4b5563 !important; /* gray-600 */
+        }
+        .text-gray-500 {
+          color: #374151 !important; /* gray-700 */
+        }
+        .dark .text-gray-400, .dark .text-gray-300 {
+          color: #d1d5db !important; /* gray-300 */
+        }
+      }
+
+      /* Accessible text utility classes */
+      .text-accessible {
+        color: #595959;
+      }
+      .dark .text-accessible {
+        color: #a3a3a3;
+      }
+      .text-accessible-muted {
+        color: #767676;
+      }
+      .dark .text-accessible-muted {
+        color: #9ca3af;
       }
 
       /* Enhanced animations */
