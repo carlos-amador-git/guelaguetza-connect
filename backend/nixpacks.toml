@@ -2,7 +2,7 @@
 nixPkgs = ["nodejs", "openssl"]
 
 [phases.build]
-cmds = ["npm ci", "npx prisma generate", "npm run build"]
+cmds = ["npm ci --no-audit --prefer-offline", "npx prisma generate", "npm run build"]
 
 [start]
 cmd = "npm start"
