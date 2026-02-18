@@ -11,9 +11,9 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const HERO_IMAGES = [
-  '/images/guelaguetza-dancers.png',
-  '/images/guelaguetza-pineapple.png',
-  '/images/guelaguetza-stage.png',
+  '/images/guelaguetza-dancers.webp',
+  '/images/guelaguetza-pineapple.webp',
+  '/images/guelaguetza-stage.webp',
 ];
 
 interface LandingViewProps {

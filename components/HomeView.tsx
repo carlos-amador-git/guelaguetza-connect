@@ -15,9 +15,9 @@ import {
 } from '../services/gastronomy';
 
 const HERO_IMAGES = [
-  '/images/guelaguetza-dancers.png',
-  '/images/guelaguetza-pineapple.png',
-  '/images/guelaguetza-stage.png',
+  '/images/guelaguetza-dancers.webp',
+  '/images/guelaguetza-pineapple.webp',
+  '/images/guelaguetza-stage.webp',
 ];
 
 interface HomeViewProps {
@@ -100,7 +100,7 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
 
   useEffect(() => {
     // Load wishlist count
-    getWishlistCount().then(setWishlistCount).catch(() => {});
+    getWishlistCount().then(setWishlistCount).catch(() => { });
   }, []);
 
   const nextHero = () => setHeroIndex((prev) => (prev + 1) % HERO_IMAGES.length);
@@ -116,9 +116,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
             key={img}
             src={img}
             alt={`Guelaguetza ${index + 1}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-              index === heroIndex ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${index === heroIndex ? 'opacity-100' : 'opacity-0'
+              }`}
           />
         ))}
 
@@ -145,9 +144,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
             <button
               key={index}
               onClick={() => setHeroIndex(index)}
-              className={`w-2 h-2 rounded-full transition-all ${
-                index === heroIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${index === heroIndex ? 'bg-white w-6' : 'bg-white/50 hover:bg-white/70'
+                }`}
             />
           ))}
         </div>
@@ -218,7 +216,7 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
               <p className="text-sm md:text-base text-gray-500 dark:text-gray-400">Desfile de Delegaciones • 17:00</p>
             </div>
             <button className="bg-oaxaca-purple text-white p-2 md:p-3 rounded-full hover:bg-opacity-90 transition">
-               <PlayCircle size={24} />
+              <PlayCircle size={24} />
             </button>
           </div>
         </div>
@@ -357,9 +355,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
                     <button
                       key={index}
                       onClick={() => setDiscoverIndex(index)}
-                      className={`w-2 h-2 rounded-full transition-all ${
-                        index === discoverIndex ? 'bg-oaxaca-pink w-5' : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
-                      }`}
+                      className={`w-2 h-2 rounded-full transition-all ${index === discoverIndex ? 'bg-oaxaca-pink w-5' : 'bg-gray-300 dark:bg-gray-600 hover:bg-gray-400'
+                        }`}
                       aria-label={`Ir a slide ${index + 1}`}
                     />
                   ))}
@@ -386,9 +383,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
                     key={slide.id}
                     src={slide.image}
                     alt={slide.title}
-                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${
-                      index === discoverIndex ? 'opacity-100' : 'opacity-0'
-                    }`}
+                    className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ${index === discoverIndex ? 'opacity-100' : 'opacity-0'
+                      }`}
                   />
                 ))}
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent flex items-center">
@@ -397,9 +393,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
                     {DISCOVER_SLIDES.map((slide, index) => (
                       <p
                         key={`tag-${slide.id}`}
-                        className={`text-oaxaca-yellow text-xs md:text-sm font-semibold uppercase tracking-wider transition-opacity duration-700 ${
-                          index === discoverIndex ? 'opacity-100' : 'opacity-0 absolute'
-                        }`}
+                        className={`text-oaxaca-yellow text-xs md:text-sm font-semibold uppercase tracking-wider transition-opacity duration-700 ${index === discoverIndex ? 'opacity-100' : 'opacity-0 absolute'
+                          }`}
                       >
                         {slide.tag}
                       </p>
@@ -408,9 +403,8 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
                     {DISCOVER_SLIDES.map((slide, index) => (
                       <p
                         key={`title-${slide.id}`}
-                        className={`font-bold text-2xl md:text-3xl lg:text-4xl text-white transition-opacity duration-700 ${
-                          index === discoverIndex ? 'opacity-100' : 'opacity-0 absolute'
-                        }`}
+                        className={`font-bold text-2xl md:text-3xl lg:text-4xl text-white transition-opacity duration-700 ${index === discoverIndex ? 'opacity-100' : 'opacity-0 absolute'
+                          }`}
                       >
                         {slide.title}
                       </p>
@@ -524,11 +518,10 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
               <div className="flex gap-2 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
                 <button
                   onClick={() => setSelectedGastroCategory('ALL')}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${
-                    selectedGastroCategory === 'ALL'
+                  className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition ${selectedGastroCategory === 'ALL'
                       ? 'bg-white text-oaxaca-purple'
                       : 'bg-white/20 text-white hover:bg-white/30'
-                  }`}
+                    }`}
                 >
                   Todos
                 </button>
@@ -536,11 +529,10 @@ const HomeView: React.FC<HomeViewProps> = ({ setView }) => {
                   <button
                     key={item.category}
                     onClick={() => setSelectedGastroCategory(item.category)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition flex items-center gap-1.5 ${
-                      selectedGastroCategory === item.category
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition flex items-center gap-1.5 ${selectedGastroCategory === item.category
                         ? 'bg-white text-oaxaca-purple'
                         : 'bg-white/20 text-white hover:bg-white/30'
-                    }`}
+                      }`}
                   >
                     <item.icon size={12} />
                     {item.name}
